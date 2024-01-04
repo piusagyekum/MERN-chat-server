@@ -1,7 +1,6 @@
 const User = require("../models/userModel")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
-passwordRegex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$/
 
 const createToken = (id) => {
   return jwt.sign({ id }, process.env.SECRET, { expiresIn: "1d" })
@@ -19,6 +18,8 @@ const signup = async (req, res) => {
 
     const userExists = await User.findOne({ username })
     if (userExists) throw new Error("User already exists")
+
+    const passwordRegex = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$/
 
     const isStrong = passwordRegex.test(password)
     if (!isStrong) throw Error("Password not strong enough")
@@ -71,11 +72,48 @@ const login = async (req, res) => {
       token,
     })
   } catch (error) {
-    res.status(200).json({
-      code: "",
+    res.status(400).json({
+      code: "111",
       message: error.message,
     })
   }
 }
 
-module.exports = { signup, login }
+const getUserById = async (req, res) => {
+  try {
+    const userId = req.params.id
+    const user = await User.findById(userId)
+    if (!user) throw Error("User does not exist")
+    const { _id, username } = user
+    res.status(200).json({
+      code: "000",
+      message: "Operation completed successfully",
+      user: { _id, username },
+    })
+  } catch (error) {
+    res.status(400).json({
+      code: "111",
+      message: error.message,
+    })
+  }
+}
+
+const getUsers = async (req, res) => {
+  try {
+    console.log("🚀  getUsers:")
+    const users = await User.find()
+    if (!users) throw Error("Could not fetch users")
+    res.status(200).json({
+      code: "000",
+      message: "Operation completed successfully",
+      users,
+    })
+  } catch (error) {
+    res.status(500).json({
+      code: "111",
+      message: error.message,
+    })
+  }
+}
+
+module.exports = { signup, login, getUserById, getUsers }
